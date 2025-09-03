@@ -1,3 +1,11 @@
+# Generated Solidity artifacts
+*.abi
+*.bin
+artifacts/
+cache/
+
+# TypeScript build
+*.tsbuildinfo
 # Node modules
 node_modules/
 
@@ -17,6 +25,3 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
-
-*.abi
-*.bin
