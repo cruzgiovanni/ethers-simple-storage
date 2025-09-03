@@ -34,11 +34,14 @@ A study/learning project demonstrating a minimal end-to-end flow of compiling, d
 npm install
 ```
 
-2. Create a `.env` file
+2. Create a `.env` file (runtime password is provided via env at execution time)
 
 ```env
 RPC_URL=http://127.0.0.1:7545
-PRIVATE_KEY=0xYOUR_PRIVATE_KEY
+# Do NOT put the password here; you'll pass it at runtime
+
+# To use Alchemy instead of Ganache, set your RPC to the Alchemy endpoint, for example:
+# RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
 ```
 
 3. Compile the contract (generates `.abi` and `.bin`)
@@ -52,15 +55,64 @@ npx solcjs --bin --abi --include-path node_modules/ --base-path . -o . SimpleSto
 You can run the deploy script via ts-node:
 
 ```bash
-npx ts-node deploy.ts
+PRIVATE_KEY_PASSWORD=your-strong-password npx ts-node deploy.ts
 ```
 
 Or compile then run with Node.js:
 
 ```bash
-npx tsc deploy.ts
-node deploy.js
+PRIVATE_KEY_PASSWORD=your-strong-password npx tsc deploy.ts
+PRIVATE_KEY_PASSWORD=your-strong-password node deploy.js
 ```
+
+## Generate Encrypted Keystore (encryptedKey)
+
+You can encrypt your private key into a password-protected keystore JSON using Ethers v6.
+
+1. Ensure your `.env` contains only the RPC URL:
+
+```env
+RPC_URL=http://127.0.0.1:7545
+```
+
+2. Use the helper script `encryptKey.ts`:
+
+```ts
+// encryptKey.ts (simplified)
+import { ethers } from "ethers";
+import "dotenv/config";
+
+async function main() {
+  const pk = process.env.PRIVATE_KEY;
+  const pass = process.env.PRIVATE_KEY_PASSWORD;
+  if (!pk) throw new Error("Missing PRIVATE_KEY in .env");
+  if (!pass) throw new Error("Missing PRIVATE_KEY_PASSWORD in .env");
+
+  const wallet = new ethers.Wallet(pk);
+  const keystoreJson = await wallet.encrypt(pass);
+  console.log(keystoreJson);
+}
+
+main();
+```
+
+3. Run it (provide the password at runtime):
+
+```bash
+PRIVATE_KEY_PASSWORD=your-strong-password npx ts-node encryptKey.ts
+```
+
+4. Save the JSON output securely (do NOT commit it). You can later decrypt with:
+
+```ts
+const wallet = await ethers.Wallet.fromEncryptedJson(keystoreJson, password);
+```
+
+Tips:
+
+- Use a strong password; keep it outside of version control.
+- `.gitignore` already ignores common secrets and artifacts; ensure your keystore JSON is also ignored or stored safely elsewhere.
+- Never commit your raw `PRIVATE_KEY` to Git.
 
 ## What the Script Does
 
@@ -70,6 +122,12 @@ node deploy.js
 - Deploys the SimpleStorage contract and waits for 1 confirmation
 - Calls `retrieve()` to read the current value
 - Calls `store(7)` to update the value, waits for confirmation, then reads again
+
+## Deployed Contract (via Alchemy)
+
+- Network: Sepolia
+- Contract address: `0x402f4F6EA6F6e4759Fa8E0055DB7746Cc5d359A8`
+- Etherscan: https://sepolia.etherscan.io/address/0x402f4F6EA6F6e4759Fa8E0055DB7746Cc5d359A8#code
 
 ## Common Issues & Fixes
 

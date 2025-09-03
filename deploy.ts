@@ -5,17 +5,23 @@ import "dotenv/config"
 async function main() {
   try {
     const provider = new ethers.JsonRpcProvider(process.env.RPC_URL)
-    const wallet = new ethers.Wallet(
-      process.env.PRIVATE_KEY as string,
-      provider
-    )
+
+    const encryptedJson = readFileSync("./.encryptedKey.json", "utf8")
+    let wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string, provider)
+    // let wallet = ethers.Wallet.fromEncryptedJsonSync(
+    //   encryptedJson,
+    //   process.env.PRIVATE_KEY_PASSWORD as string
+    // )
+    // wallet = wallet.connect(provider)
 
     const abi = readFileSync("./SimpleStorage_sol_SimpleStorage.abi", "utf8")
     let binary = readFileSync("./SimpleStorage_sol_SimpleStorage.bin", "utf8")
 
     const factory = new ethers.ContractFactory(abi, binary, wallet)
+    console.log("Deploying, please wait...")
     const contract = await factory.deploy({ gasLimit: 3000000 })
     await contract.deploymentTransaction()?.wait(1)
+    console.log(`Contract address: ${contract.target}`)
 
     const currentFavoriteNumber = await (contract as any).retrieve()
     console.log(

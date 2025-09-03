@@ -4,6 +4,8 @@
 artifacts/
 cache/
 
+.encryptedKey.json
+
 # TypeScript build
 *.tsbuildinfo
 # Node modules
